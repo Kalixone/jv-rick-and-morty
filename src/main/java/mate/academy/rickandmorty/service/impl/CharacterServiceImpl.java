@@ -1,12 +1,12 @@
 package mate.academy.rickandmorty.service.impl;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import mate.academy.rickandmorty.dto.CharacterListDto;
+import mate.academy.rickandmorty.dto.CharacterResponseDto;
 import mate.academy.rickandmorty.model.Character;
-import mate.academy.rickandmorty.model.RickAndMortyResponse;
 import mate.academy.rickandmorty.repository.CharacterRepository;
 import mate.academy.rickandmorty.service.CharacterService;
 import org.springframework.http.HttpStatus;
@@ -28,10 +28,10 @@ public class CharacterServiceImpl implements CharacterService {
 
         while (true) {
             String pageUrl = url + "?page=" + page;
-            RickAndMortyResponse response;
+            CharacterListDto response;
 
             try {
-                response = restTemplate.getForObject(pageUrl, RickAndMortyResponse.class);
+                response = restTemplate.getForObject(pageUrl, CharacterListDto.class);
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                     break;
@@ -68,15 +68,29 @@ public class CharacterServiceImpl implements CharacterService {
     }
 
     @Override
-    public Optional<Character> getRandomCharacter() {
+    public CharacterResponseDto getRandomCharacter() {
         int randomId = random.nextInt(1, (int) characterRepository.count());
-        return characterRepository.findById(Long.valueOf(randomId));
+        Character character = characterRepository
+                .findById(Long.valueOf(randomId))
+                .orElseThrow(() -> new RuntimeException("Character not found"));
+        return toDto(character);
     }
 
     @Override
-    public List<Character> searchCharactersByName(String word) {
+    public List<CharacterResponseDto> searchCharactersByName(String word) {
         return characterRepository.findAll().stream()
                 .filter(ch -> ch.getName().toLowerCase().contains(word.toLowerCase()))
+                .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    public CharacterResponseDto toDto(Character character) {
+        return new CharacterResponseDto(
+                character.getId(),
+                character.getExternalId(),
+                character.getName(),
+                character.getStatus(),
+                character.getGender()
+        );
     }
 }

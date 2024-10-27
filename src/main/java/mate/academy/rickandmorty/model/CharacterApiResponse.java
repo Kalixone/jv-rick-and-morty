@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RickAndMorty {
+public class CharacterApiResponse {
     @JsonProperty("id")
     private int id;
     @JsonProperty("name")
